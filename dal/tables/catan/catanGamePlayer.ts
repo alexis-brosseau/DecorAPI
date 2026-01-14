@@ -1,8 +1,9 @@
 import type { PoolClient } from 'pg';
 import type { UUID } from 'crypto';
-import Table from '../table.js';
-import type { CatanGamePlayer, CatanPlayerColor } from '../models/catan.js';
-import { catanPlayerColorFromString } from '../models/catan.js';
+import Table from '../../table.js';
+import type { CatanGamePlayer, CatanPlayerColor } from '../../models/catan.js';
+import { catanPlayerColorFromString } from '../../models/catan.js';
+import type { Identity } from '../../../core/identity.js';
 
 export default class CatanGamePlayerTable extends Table {
   constructor(client: PoolClient) {
@@ -84,6 +85,14 @@ export default class CatanGamePlayerTable extends Table {
     const data = rows[0];
     if (!data) return null;
     return this.mapRow(data);
+  }
+
+  async getByIdentity(gameId: UUID, identity: Identity): Promise<CatanGamePlayer | null> {
+    if (identity.isUser()) {
+      return this.getByGameAndUser(gameId, identity.id);
+    } else {
+      return this.getByGameAndSession(gameId, identity.id);
+    }
   }
 
   async add({

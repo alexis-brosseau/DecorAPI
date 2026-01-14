@@ -1,8 +1,8 @@
 import type { PoolClient } from 'pg';
 import type { UUID } from 'crypto';
-import Table from '../table.js';
-import type { CatanTradeOffer, CatanTradeStatus } from '../models/catan.js';
-import { catanTradeStatusFromString } from '../models/catan.js';
+import Table from '../../table.js';
+import type { CatanTradeOffer, CatanTradeStatus } from '../../models/catan.js';
+import { catanTradeStatusFromString } from '../../models/catan.js';
 
 export default class CatanTradeOfferTable extends Table {
   constructor(client: PoolClient) {

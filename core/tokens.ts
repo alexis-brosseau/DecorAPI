@@ -1,7 +1,8 @@
 import type { UUID } from 'crypto';
-import type { UserRole } from '../dal/models/user.js';
+
 import { config } from '../global.js';
 import jwt from 'jsonwebtoken';
+import type { IdentityRole } from './identity.js';
 
 export interface RefreshTokenPayload {
   userId: UUID;
@@ -10,7 +11,7 @@ export interface RefreshTokenPayload {
 
 export interface AccessTokenPayload {
   userId?: UUID;
-  role?: UserRole;
+  role?: IdentityRole;
   sessionId?: UUID;
 }
 

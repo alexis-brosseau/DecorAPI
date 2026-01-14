@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import Logger from "../core/logger.js";
 import { DatabaseError } from "pg";
-import { BadRequestError, UnauthorizedError, ForbiddenError } from '../core/httpContext.js';
+import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError } from '../core/httpContext.js';
 
 const errorHanlder = (err: Error, req: Request, res: Response, next: NextFunction) => {
   // Bad JSON
@@ -9,7 +9,6 @@ const errorHanlder = (err: Error, req: Request, res: Response, next: NextFunctio
     return res.status(400).json("Invalid JSON payload");
   }
   
-
   if (err instanceof DatabaseError) {
     Logger.databaseError(err.message, err.code);
     res.status(500).send("Internal Server Error");
@@ -28,6 +27,16 @@ const errorHanlder = (err: Error, req: Request, res: Response, next: NextFunctio
   
   if (err instanceof ForbiddenError) {
     res.status(403).json({ error: err.message });
+    return;
+  }
+
+  if (err instanceof NotFoundError) {
+    res.status(404).json({ error: err.message });
+    return;
+  }
+
+  if (err instanceof ConflictError) {
+    res.status(409).json({ error: err.message });
     return;
   }
 

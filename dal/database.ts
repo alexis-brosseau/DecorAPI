@@ -2,13 +2,13 @@ import { Pool, DatabaseError } from 'pg';
 import type { PoolClient } from 'pg';
 import { config } from '../global.js';
 import UserTable from './tables/user.js';
-import CatanSessionTable from './tables/catanSession.js';
-import CatanGameTable from './tables/catanGame.js';
-import CatanGamePlayerTable from './tables/catanGamePlayer.js';
-import CatanGameStateTable from './tables/catanGameState.js';
-import CatanGameEventTable from './tables/catanGameEvent.js';
-import CatanChatMessageTable from './tables/catanChatMessage.js';
-import CatanTradeOfferTable from './tables/catanTradeOffer.js';
+import CatanSessionTable from './tables/catan/catanSession.js';
+import CatanGameTable from './tables/catan/catanGame.js';
+import CatanGamePlayerTable from './tables/catan/catanGamePlayer.js';
+import CatanGameStateTable from './tables/catan/catanGameState.js';
+import CatanGameEventTable from './tables/catan/catanGameEvent.js';
+import CatanChatMessageTable from './tables/catan/catanChatMessage.js';
+import CatanTradeOfferTable from './tables/catan/catanTradeOffer.js';
 
 const DB_POOL = new Pool({
   host: config.db.host,

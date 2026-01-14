@@ -22,8 +22,7 @@ CREATE TYPE user_role AS ENUM ('admin', 'user');
 
 CREATE TABLE "user" (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
-    surname VARCHAR(255) NOT NULL,
+    username VARCHAR(16) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     role user_role NOT NULL DEFAULT 'user',
     hash VARCHAR(255) NOT NULL,
@@ -77,7 +76,7 @@ CREATE TABLE catan_game_player (
 
     is_host BOOLEAN NOT NULL DEFAULT false,
     is_ready BOOLEAN NOT NULL DEFAULT false,
-    is_connected BOOLEAN NOT NULL DEFAULT true,
+    is_connected BOOLEAN NOT NULL DEFAULT false,
 
     victory_points SMALLINT NOT NULL DEFAULT 0,
 

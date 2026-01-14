@@ -1,7 +1,7 @@
 import type { PoolClient } from 'pg';
 import type { UUID } from 'crypto';
-import Table from '../table.js';
-import type { CatanGameEvent } from '../models/catan.js';
+import Table from '../../table.js';
+import type { CatanGameEvent } from '../../models/catan.js';
 
 export default class CatanGameEventTable extends Table {
   constructor(client: PoolClient) {

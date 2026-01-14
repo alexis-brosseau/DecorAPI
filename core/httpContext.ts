@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import type Database from '../dal/database.js';
 import type { AccessTokenPayload } from './tokens.js';
 import type { UUID } from 'crypto';
+import { Identity, IdentityRole } from './identity.js';
 
 export default interface HttpContext {
   req: Request;
@@ -9,9 +10,15 @@ export default interface HttpContext {
   body?: any;
   query?: Record<string, any>;
   db?: Database;
-  token?: AccessTokenPayload
-  userId?: UUID | null;
-  sessionId?: UUID | null;
+  token?: AccessTokenPayload;
+  identity?: Identity;
+}
+
+export class InternalServerError extends Error {
+  constructor(message = 'Internal Server Error') {
+    super(message);
+    this.name = 'InternalServerError';
+  }
 }
 
 export class UnauthorizedError extends Error {
@@ -35,6 +42,20 @@ export class BadRequestError extends Error {
   }
 }
 
+export class NotFoundError extends Error {
+  constructor(message = 'Not Found') {
+    super(message);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class ConflictError extends Error {
+  constructor(message = 'Conflict') {
+    super(message);
+    this.name = 'ConflictError';
+  }
+}
+
 export function ensureDb(db?: Database | null) {
   if (!db) throw new BadRequestError('Database not found in HttpContext');
   return db;
@@ -50,21 +71,8 @@ export function ensureQuery(query?: Record<string, any>) {
   return query;
 }
 
-export function ensureUser(userId?: UUID | null) {
-  if (!userId) throw new UnauthorizedError();
-  return userId;
-}
-
-export function ensureIdentity(userId?: UUID | null, sessionId?: UUID | null):
-  | { kind: 'user'; userId: UUID }
-  | { kind: 'session'; sessionId: UUID } {
-  if (userId) return { kind: 'user', userId };
-  if (sessionId) return { kind: 'session', sessionId };
-  throw new UnauthorizedError();
-}
-
-export function ensureRole(ctx: HttpContext, predicate: (token: AccessTokenPayload) => boolean) {
-  if (!ctx.token) throw new UnauthorizedError();
-  if (!predicate(ctx.token)) throw new ForbiddenError();
-  return ctx.token;
+export function ensureIdentity(identity?: Identity | null, requiredRole?: IdentityRole): Identity {
+  if (!identity) throw new UnauthorizedError();
+  if (requiredRole && !identity.hasRole(requiredRole)) throw new ForbiddenError('Insufficient permissions');
+  return identity;
 }

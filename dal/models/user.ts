@@ -2,8 +2,7 @@ import type { UUID } from "crypto";
 
 export default interface User {
     id: UUID;
-    name: string;
-    surname: string;
+    username: string;
     email: string;
     role: UserRole;
     tokenVersion: number;

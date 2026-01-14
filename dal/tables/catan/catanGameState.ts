@@ -1,7 +1,7 @@
 import type { PoolClient } from 'pg';
 import type { UUID } from 'crypto';
-import Table from '../table.js';
-import type { CatanGameState } from '../models/catan.js';
+import Table from '../../table.js';
+import type { CatanGameState } from '../../models/catan.js';
 
 export default class CatanGameStateTable extends Table {
   constructor(client: PoolClient) {
@@ -22,6 +22,7 @@ export default class CatanGameStateTable extends Table {
       SELECT game_id, version, state, updated_at
       FROM catan_game_state
       WHERE game_id = $1
+      ORDER BY version DESC
     `;
 
     const rows = await super.query(sql, [gameId]);

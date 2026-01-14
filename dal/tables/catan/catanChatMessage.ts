@@ -1,7 +1,7 @@
 import type { PoolClient } from 'pg';
 import type { UUID } from 'crypto';
-import Table from '../table.js';
-import type { CatanChatMessage } from '../models/catan.js';
+import Table from '../../table.js';
+import type { CatanChatMessage } from '../../models/catan.js';
 
 export default class CatanChatMessageTable extends Table {
   constructor(client: PoolClient) {

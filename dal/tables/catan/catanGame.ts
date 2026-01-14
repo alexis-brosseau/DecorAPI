@@ -1,15 +1,26 @@
 import type { PoolClient } from 'pg';
-import Table from '../table.js';
-import type { CatanGame, CatanGameStatus } from '../models/catan.js';
-import { catanGameStatusFromString } from '../models/catan.js';
-import { randomBytes } from 'crypto';
+import Table from '../../table.js';
+import type { CatanGame, CatanGameStatus } from '../../models/catan.js';
+import { catanGameStatusFromString } from '../../models/catan.js';
 
-function generateJoinCode(length: number = 6): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  const buf = randomBytes(length);
-  let out = '';
-  for (let i = 0; i < length; i++) out += alphabet[buf[i]! % alphabet.length];
-  return out;
+function generateJoinCode(length: number): string {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const base = chars.length;
+
+  // Use current time in seconds for rolling codes
+  // Each second produces a different code, ensuring uniqueness
+  // Increasing code length captures finer time granularity
+  const time = Math.floor(Date.now() / 1000);
+
+  let code = '';
+  let num = time;
+
+  for (let i = 0; i < length; i++) {
+    code = chars[num % base] + code;
+    num = Math.floor(num / base);
+  }
+
+  return code;
 }
 
 export default class CatanGameTable extends Table {
@@ -41,14 +52,12 @@ export default class CatanGameTable extends Table {
     createdByUserId,
     seed,
     config,
-    joinCodeLength,
   }: {
     name?: string | null;
     maxPlayers?: number;
     createdByUserId?: string | null;
     seed?: number | null;
     config?: unknown;
-    joinCodeLength?: number;
   }): Promise<CatanGame> {
     const sql = `
       INSERT INTO catan_game (join_code, name, max_players, created_by_user_id, seed, config)
@@ -59,10 +68,10 @@ export default class CatanGameTable extends Table {
     `;
 
     const maxP = maxPlayers ?? 4;
-    const len = joinCodeLength ?? 6;
+    const codeLen = 6;
 
     for (let attempt = 0; attempt < 5; attempt++) {
-      const joinCode = generateJoinCode(len);
+      const joinCode = generateJoinCode(codeLen);
       try {
         const rows = await super.query(sql, [
           joinCode,

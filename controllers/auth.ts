@@ -1,49 +1,22 @@
 import Controller, { post, body, useTransaction } from '../core/controller.js';
 import type HttpContext from '../core/httpContext.js';
-import { ensureDb, UnauthorizedError } from '../core/httpContext.js';
+import { ensureDb, UnauthorizedError, ensureIdentity } from '../core/httpContext.js';
 import { config, Environment } from '../global.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../core/tokens.js';
 import { createUser, authUser, getUser } from '../services/user.js';
 import { randomUUID } from 'crypto';
+import { Identity, IdentityRole } from '../core/identity.js';
 
 export default class AuthController extends Controller {
 
-  @post("/anonymous")
-  @useTransaction()
-  async anonymous({ res, req, db }: HttpContext) {
-    db = ensureDb(db);
-
-    // Guests do not get a catan_session here anymore.
-    // A session is created only when joining a lobby via POST /game/join.
-
-    if (req.cookies?.refreshToken) {
-      res.clearCookie('refreshToken', {
-        httpOnly: true,
-        secure: config.environment === Environment.Production,
-        sameSite: 'strict',
-      });
-    }
-
-    if (req.cookies?.sessionToken) {
-      res.clearCookie('sessionToken', {
-        httpOnly: true,
-        secure: config.environment === Environment.Production,
-        sameSite: 'strict',
-      });
-    }
-
-    const accessToken = generateAccessToken({});
-    res.json({ accessToken });
-  }
-
   @post("/register")
-  @body({ name: String, surname: String, email: String, password: String })
+  @body({ username: String, email: String, password: String })
   @useTransaction()
   async register({ res, body, db }: HttpContext) {
-    const { name, surname, email, password } = body;
+    const { username, email, password } = body;
     db = ensureDb(db);
 
-    const user = await createUser(name, surname, email, password, db);
+    const user = await createUser(username, email, password, db);
 
     // Change to sends email with verification link in production
     res.status(201).json({ user });
@@ -101,8 +74,37 @@ export default class AuthController extends Controller {
     res.json({ accessToken });
   }
 
+  @post("/guest")
+  @useTransaction()
+  async guest({ res, db }: HttpContext) {
+    db = ensureDb(db);
+
+    // Create a new guest session
+    const guestToken = randomUUID();
+    const session = await db.catanSession.create({ token: guestToken, expiresAt: null });
+
+    // Generate access token for the guest
+    const accessToken = generateAccessToken({ 
+      sessionId: session.id,
+      role: IdentityRole.GUEST,
+    });
+
+    // Set session cookie
+    res.cookie('sessionToken', guestToken, {
+      httpOnly: true,
+      secure: config.environment === Environment.Production,
+      sameSite: config.environment === Environment.Production ? 'strict' : 'lax',
+    });
+
+    res.status(201).json({
+      guestId: session.id,
+      accessToken,
+    });
+  }
+
   @post("/logout")
-  async logout({ res }: HttpContext) {
+  async logout({ res, identity }: HttpContext) {
+    ensureIdentity(identity, IdentityRole.USER)
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: config.environment === Environment.Production,

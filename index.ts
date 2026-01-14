@@ -9,7 +9,8 @@ import corsHandler from "./middlewares/cors.js";
 import controllerRouter from './middlewares/controller.js';
 import errorHandler from './middlewares/error.js';
 import { authMiddleware } from "./middlewares/auth.js";
-import { attachCatanWebSocketServer } from "./realtime/catanWs.js";
+import GameManager from "./game/GameManager.js";
+import CatanGame from "./game/catan/CatanGame.js";
 
 const app = express();
 export const server = http.createServer(app);
@@ -26,7 +27,9 @@ app.use(controllerRouter);
 // Error handling middleware should be the last one
 app.use(errorHandler);
 
-attachCatanWebSocketServer(server);
+const gameManager = new GameManager();
+gameManager.register('/ws/catan', () => new CatanGame());
+gameManager.attach(server);
 
 server.listen(config.port, () => {
   showServerInfos();

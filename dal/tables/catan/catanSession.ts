@@ -1,8 +1,8 @@
 import type { PoolClient } from 'pg';
 import type { UUID } from 'crypto';
 import { createHash } from 'crypto';
-import Table from '../table.js';
-import type { CatanSession } from '../models/catan.js';
+import Table from '../../table.js';
+import type { CatanSession } from '../../models/catan.js';
 
 export default class CatanSessionTable extends Table {
   constructor(client: PoolClient) {

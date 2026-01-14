@@ -4,8 +4,7 @@ import type { UUID } from 'crypto';
 import type User from '../dal/models/user.js';
 
 export async function createUser(
-  name: string,
-  surname: string,
+  username: string,
   email: string,
   password: string,
   db?: Database,
@@ -14,8 +13,7 @@ export async function createUser(
   return executeWithDb(db, async (database) => {
     return await database.user.create({
       ...(id ? { id } : {}),
-      name,
-      surname,
+      username,
       email,
       password,
     });

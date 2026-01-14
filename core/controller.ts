@@ -3,6 +3,7 @@ import type { Router, Request, Response, NextFunction } from 'express';
 import type HttpContext from './httpContext.js';
 import { transaction } from '../dal/database.js';
 import { UnauthorizedError, ForbiddenError, BadRequestError } from './httpContext.js';
+import { Identity } from './identity.js';
 
 export interface RouteDefinition {
   method: keyof Router;
@@ -46,9 +47,12 @@ function createRouteDecorator(method: keyof Router) {
         const ctx: HttpContext = {
           req,
           res,
-          userId: (req as any).userId ?? null,
-          sessionId: (req as any).sessionId ?? null,
           token: (req as any).token ?? null,
+          identity: (req as any).identity ?? Identity.fromAuth(
+            (req as any).userId,
+            (req as any).sessionId,
+            (req as any).role
+          ),
         };
 
         await original.call(this, ctx);

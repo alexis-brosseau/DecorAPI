@@ -35,16 +35,6 @@ This document is a concrete plan for recreating a playable Settlers of Catan loo
 ### 1) Define ONE canonical state JSON shape
 Stored in `catan_game_state.state`.
 
-Suggested top-level shape:
-- `meta`: `{ version, createdAt, seed }`
-- `board`: `{ hexes, numbers, ports, robberHexId }`
-- `bank`: resource counts, dev deck remaining
-- `playersPublic`: per-player public info (color/seat, buildings count, public VP, longestRoad, largestArmy)
-- `playersPrivate`: per-player private info (resources/dev cards). IMPORTANT: do NOT broadcast this structure.
-- `turn`: `{ activePlayerId, phase, subphase, dice, hasRolled, devCardPlayedThisTurn }`
-- `pending`: workflow prompts (discard list, robber move needed, steal selection, etc.)
-- `trade`: open offers and/or references to DB offers
-
 ### 2) Public vs private views
 - Public:
   - board layout, roads/settlements/cities locations
