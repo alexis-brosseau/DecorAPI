@@ -6,7 +6,7 @@ declare global {
   namespace Express {
     interface Request {
       userId?: string | null;
-      sessionId?: string | null;
+      guestId?: string | null;
       token?: import('../core/tokens.js').AccessTokenPayload | null;
       identity?: import('../core/identity.js').Identity | null;
     }
@@ -20,7 +20,7 @@ declare global {
  */
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   (req as any).userId = null;
-  (req as any).sessionId = null;
+  (req as any).guestId = null;
   (req as any).token = null;
   (req as any).identity = null;
 
@@ -35,11 +35,11 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     if (!token) return next();
     (req as any).userId = (token as any).userId ?? null;
     (req as any).role = (token as any).role ?? null;
-    (req as any).sessionId = (token as any).sessionId ?? null;
+    (req as any).guestId = (token as any).guestId ?? null;
     (req as any).token = token;
     (req as any).identity = Identity.fromAuth(
       (token as any).userId,
-      (token as any).sessionId,
+      (token as any).guestId,
       (token as any).role
     );
     return next();

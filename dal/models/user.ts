@@ -18,7 +18,11 @@ export class UserRole {
         'user'
     ]
 
-    private constructor(public readonly value: string) {}
+    public readonly value: string;
+
+    private constructor(value: string) {
+        this.value = value;
+    }
 
     // Operator overloading for +, -, >, <
     [Symbol.toPrimitive](hint: string) {

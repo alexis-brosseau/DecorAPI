@@ -29,8 +29,8 @@ export default class UserTable extends Table {
 
   async create({ id, username, email, password }: { id?: UUID; username: string; email: string; password: string; }): Promise<User> {
     const sql = `
-      INSERT INTO "user" (id, name, surname, email, hash)
-      VALUES ($1, $2, $3, $4, crypt($5, gen_salt('bf')))
+      INSERT INTO "user" (id, username, email, hash)
+      VALUES ($1, $2, $3, crypt($4, gen_salt('bf')))
       RETURNING id, username, email, role, token_version, created_at
     `;
 

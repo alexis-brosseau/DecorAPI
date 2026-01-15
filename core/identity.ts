@@ -67,20 +67,20 @@ export class Identity {
 
   static fromAuth(
     userId?: UUID | null,
-    sessionId?: UUID | null,
+    guestId?: UUID | null,
     userRole?: string
   ): Identity | null {
     if (userId) return Identity.user(userId, userRole);
-    if (sessionId) return Identity.guest(sessionId);
+    if (guestId) return Identity.guest(guestId);
     return null;
   }
 
   static require(
     userId?: UUID | null,
-    sessionId?: UUID | null,
+    guestId?: UUID | null,
     userRole?: string
   ): Identity {
-    const identity = Identity.fromAuth(userId, sessionId, userRole);
+    const identity = Identity.fromAuth(userId, guestId, userRole);
     if (!identity) {
       const err = new Error('Authentication required');
       (err as any).status = 401;

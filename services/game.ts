@@ -80,7 +80,7 @@ export async function joinLobby(
       player = await database.catanGamePlayer.add({
         gameId: game.id,
         userId: user?.id ?? null,
-        sessionId: identity.isGuest() ? (identity.id as any) : null,
+        guestId: identity.isGuest() ? (identity.id as any) : null,
         seat: nextSeat,
         displayName: user?.id ?? defaultGuestName(identity.id),
         isHost,

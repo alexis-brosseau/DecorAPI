@@ -1,7 +1,6 @@
 import type { PoolClient } from 'pg';
 import Table from '../../table.js';
 import type { CatanGame, CatanGameStatus } from '../../models/catan.js';
-import { catanGameStatusFromString } from '../../models/catan.js';
 
 function generateJoinCode(length: number): string {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -29,7 +28,7 @@ export default class CatanGameTable extends Table {
   }
 
   private mapRow(data: any): CatanGame {
-    const status = catanGameStatusFromString(data.status) ?? 'lobby';
+    const status = data.status ?? 'lobby';
 
     return {
       id: data.id,

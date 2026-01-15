@@ -1,4 +1,4 @@
-import Controller, { post, body, useTransaction } from '../core/controller.js';
+import Controller, { get, post, body, useTransaction } from '../core/controller.js';
 import type HttpContext from '../core/httpContext.js';
 import { ensureDb, UnauthorizedError, ensureIdentity } from '../core/httpContext.js';
 import { config, Environment } from '../global.js';
@@ -8,6 +8,14 @@ import { randomUUID } from 'crypto';
 import { Identity, IdentityRole } from '../core/identity.js';
 
 export default class AuthController extends Controller {
+
+  @post("/all")
+  @useTransaction()
+  async all({ res, db }: HttpContext) {
+    db = ensureDb(db);
+    const users = await db.user.query('SELECT id, username, email, role, token_version, created_at FROM "user"');
+    res.status(200).json({ users });
+  }
 
   @post("/register")
   @body({ username: String, email: String, password: String })
@@ -52,6 +60,31 @@ export default class AuthController extends Controller {
     res.json({ accessToken });
   }
 
+  @post("/guest")
+  async guest({ res }: HttpContext) {
+
+    const guestId = randomUUID();
+    const refreshToken = generateRefreshToken({ 
+      guestId: guestId,
+    });
+
+    // Generate access token for the guest
+    const accessToken = generateAccessToken({ 
+      guestId: guestId,
+      role: IdentityRole.GUEST,
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: config.environment === Environment.Production,
+      sameSite: config.environment === Environment.Production ? 'strict' : 'lax',
+      maxAge: config.jwt.refreshTokenLifetime * 1000,
+    });
+
+    res.status(201).json({ accessToken });
+  }
+
+
   @post("/refresh")
   @useTransaction()
   async refresh({ res, req, db }: HttpContext) {
@@ -62,44 +95,30 @@ export default class AuthController extends Controller {
 
     const token = verifyRefreshToken(refreshToken);
     if (!token) throw new UnauthorizedError('Invalid or expired token');
+    
+    let accessToken;
+
+    if (!('userId' in token) && !('guestId' in token)) {
+      throw new UnauthorizedError('Unauthorized');
+    }
+
+    if ('guestId' in token) {
+      accessToken = generateAccessToken({
+        guestId: token.guestId,
+        role: IdentityRole.GUEST,
+      });
+      res.json({ accessToken });
+      return;
+    }
 
     const user = await getUser(token.userId, db);
     if (!user || user.tokenVersion !== token.version) throw new UnauthorizedError('Unauthorized');
 
-    const accessToken = generateAccessToken({ 
+    accessToken = generateAccessToken({ 
       userId: user.id,
       role: user.role,
     });
-    
     res.json({ accessToken });
-  }
-
-  @post("/guest")
-  @useTransaction()
-  async guest({ res, db }: HttpContext) {
-    db = ensureDb(db);
-
-    // Create a new guest session
-    const guestToken = randomUUID();
-    const session = await db.catanSession.create({ token: guestToken, expiresAt: null });
-
-    // Generate access token for the guest
-    const accessToken = generateAccessToken({ 
-      sessionId: session.id,
-      role: IdentityRole.GUEST,
-    });
-
-    // Set session cookie
-    res.cookie('sessionToken', guestToken, {
-      httpOnly: true,
-      secure: config.environment === Environment.Production,
-      sameSite: config.environment === Environment.Production ? 'strict' : 'lax',
-    });
-
-    res.status(201).json({
-      guestId: session.id,
-      accessToken,
-    });
   }
 
   @post("/logout")

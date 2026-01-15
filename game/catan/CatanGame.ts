@@ -36,8 +36,8 @@ export default class CatanGame extends Game {
     }
 
     const player = identity.isUser()
-      ? await (db as any).catanGamePlayer.getByGameAndUser(game.id, identity.id)
-      : await (db as any).catanGamePlayer.getByGameAndSession(game.id, identity.id);
+      ? await db.catanGamePlayer.getByGameAndUser(game.id, identity.id)
+      : await db.catanGamePlayer.getByGameAndGuest(game.id, identity.id);
 
     if (!player) {
       const err = new Error('Player not found in game (call /join first)');
@@ -45,28 +45,28 @@ export default class CatanGame extends Game {
       throw err;
     }
 
-    await (db as any).catanGamePlayer.setConnected(player.id, true);
+    await db.catanGamePlayer.setConnected(player.id, true);
     const state = await ensureInitialState(db, game.id);
-    const players = await (db as any).catanGamePlayer.listByGame(game.id);
+    const players = await db.catanGamePlayer.listByGame(game.id);
 
     return { game, players, state, phase: phaseFromStateRow(state), player };
   }
 
   async onDisconnect(db: Database, ctx: ConnectionContext): Promise<void> {
-    await (db as any).catanGamePlayer.setConnected(ctx.playerId, false);
+    await db.catanGamePlayer.setConnected(ctx.playerId, false);
   }
 
   async routeMessage(db: Database, ctx: ConnectionContext, msg: any): Promise<RouteResult> {
     if (msg.type === 'ping') return { send: { type: 'pong' } };
 
     if (msg.type === 'player:setReady') {
-      const updated = await (db as any).catanGamePlayer.setReady(ctx.playerId, Boolean(msg.isReady));
-      const players = await (db as any).catanGamePlayer.listByGame(updated.gameId);
+      const updated = await db.catanGamePlayer.setReady(ctx.playerId, Boolean(msg.isReady));
+      const players = await db.catanGamePlayer.listByGame(updated.gameId);
       return { broadcast: { type: 'players:update', players } };
     }
 
     if (msg.type === 'game:advancePhase') {
-      const players = await (db as any).catanGamePlayer.listByGame(ctx.gameId);
+      const players = await db.catanGamePlayer.listByGame(ctx.gameId);
       const me = players.find((p: any) => p.id === ctx.playerId);
       if (!me) {
         const err = new Error('Player not found');
@@ -91,19 +91,19 @@ export default class CatanGame extends Game {
           (err as any).status = 409;
           throw err;
         }
-        await (db as any).catanGame.setStatus(ctx.gameId, 'running');
+        await db.catanGame.setStatus(ctx.gameId, 'running');
       }
 
       let closeRoom = false;
       if (phase === 'end') {
-        await (db as any).catanGame.setStatus(ctx.gameId, 'finished');
-        await (db as any).catanGamePlayer.setConnectedByGame(ctx.gameId, false);
+        await db.catanGame.setStatus(ctx.gameId, 'finished');
+        await db.catanGamePlayer.setConnectedByGame(ctx.gameId, false);
         closeRoom = true;
       }
 
       const newState = { ...(stateRow.state ?? {}), phase };
-      const updated = await (db as any).catanGameState.upsert(ctx.gameId, newState);
-      const updatedPlayers = await (db as any).catanGamePlayer.listByGame(ctx.gameId);
+      const updated = await db.catanGameState.upsert(ctx.gameId, newState);
+      const updatedPlayers = await db.catanGamePlayer.listByGame(ctx.gameId);
 
       return { broadcast: { type: 'phase:update', phase, state: updated, players: updatedPlayers }, closeRoom };
     }

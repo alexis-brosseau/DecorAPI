@@ -15,7 +15,7 @@ export default class CatanGamePlayerTable extends Table {
       id: data.id,
       gameId: data.game_id,
       userId: data.user_id ?? null,
-      sessionId: data.session_id ?? null,
+      guestId: data.guest_id ?? null,
 
       seat: Number(data.seat),
       color: catanPlayerColorFromString(data.color ?? null),
@@ -38,7 +38,7 @@ export default class CatanGamePlayerTable extends Table {
   async listByGame(gameId: UUID): Promise<CatanGamePlayer[]> {
     const sql = `
       SELECT
-        id, game_id, user_id, session_id, seat, color, display_name,
+        id, game_id, user_id, guest_id, seat, color, display_name,
         is_host, is_ready, is_connected,
         victory_points, played_knights, longest_road_length, largest_army, longest_road,
         created_at
@@ -51,19 +51,19 @@ export default class CatanGamePlayerTable extends Table {
     return rows.map(r => this.mapRow(r));
   }
 
-  async getByGameAndSession(gameId: UUID, sessionId: UUID): Promise<CatanGamePlayer | null> {
+  async getByGameAndGuest(gameId: UUID, guestId: UUID): Promise<CatanGamePlayer | null> {
     const sql = `
       SELECT
-        id, game_id, user_id, session_id, seat, color, display_name,
+        id, game_id, user_id, guest_id, seat, color, display_name,
         is_host, is_ready, is_connected,
         victory_points, played_knights, longest_road_length, largest_army, longest_road,
         created_at
       FROM catan_game_player
-      WHERE game_id = $1 AND session_id = $2
+      WHERE game_id = $1 AND guest_id = $2
       LIMIT 1
     `;
 
-    const rows = await super.query(sql, [gameId, sessionId]);
+    const rows = await super.query(sql, [gameId, guestId]);
     const data = rows[0];
     if (!data) return null;
     return this.mapRow(data);
@@ -72,7 +72,7 @@ export default class CatanGamePlayerTable extends Table {
   async getByGameAndUser(gameId: UUID, userId: UUID): Promise<CatanGamePlayer | null> {
     const sql = `
       SELECT
-        id, game_id, user_id, session_id, seat, color, display_name,
+        id, game_id, user_id, guest_id, seat, color, display_name,
         is_host, is_ready, is_connected,
         victory_points, played_knights, longest_road_length, largest_army, longest_road,
         created_at
@@ -91,14 +91,14 @@ export default class CatanGamePlayerTable extends Table {
     if (identity.isUser()) {
       return this.getByGameAndUser(gameId, identity.id);
     } else {
-      return this.getByGameAndSession(gameId, identity.id);
+      return this.getByGameAndGuest(gameId, identity.id);
     }
   }
 
   async add({
     gameId,
     userId,
-    sessionId,
+    guestId,
     seat,
     color,
     displayName,
@@ -106,7 +106,7 @@ export default class CatanGamePlayerTable extends Table {
   }: {
     gameId: UUID;
     userId?: UUID | null;
-    sessionId?: UUID | null;
+    guestId?: UUID | null;
     seat: number;
     color?: CatanPlayerColor | null;
     displayName: string;
@@ -114,11 +114,11 @@ export default class CatanGamePlayerTable extends Table {
   }): Promise<CatanGamePlayer> {
     const sql = `
       INSERT INTO catan_game_player
-        (game_id, user_id, session_id, seat, color, display_name, is_host)
+        (game_id, user_id, guest_id, seat, color, display_name, is_host)
       VALUES
         ($1, $2, $3, $4, $5::catan_player_color, $6, $7)
       RETURNING
-        id, game_id, user_id, session_id, seat, color, display_name,
+        id, game_id, user_id, guest_id, seat, color, display_name,
         is_host, is_ready, is_connected,
         victory_points, played_knights, longest_road_length, largest_army, longest_road,
         created_at
@@ -127,7 +127,7 @@ export default class CatanGamePlayerTable extends Table {
     const rows = await super.query(sql, [
       gameId,
       userId ?? null,
-      sessionId ?? null,
+      guestId ?? null,
       seat,
       color ?? null,
       displayName,
@@ -145,7 +145,7 @@ export default class CatanGamePlayerTable extends Table {
       SET is_ready = $2
       WHERE id = $1
       RETURNING
-        id, game_id, user_id, session_id, seat, color, display_name,
+        id, game_id, user_id, guest_id, seat, color, display_name,
         is_host, is_ready, is_connected,
         victory_points, played_knights, longest_road_length, largest_army, longest_road,
         created_at

@@ -50,7 +50,7 @@ function createRouteDecorator(method: keyof Router) {
           token: (req as any).token ?? null,
           identity: (req as any).identity ?? Identity.fromAuth(
             (req as any).userId,
-            (req as any).sessionId,
+            (req as any).guestId,
             (req as any).role
           ),
         };

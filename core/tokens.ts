@@ -9,18 +9,25 @@ export interface RefreshTokenPayload {
   version: number;
 }
 
+export interface GuestRefreshTokenPayload {
+  guestId: UUID;
+}
+
 export interface AccessTokenPayload {
   userId?: UUID;
   role?: IdentityRole;
-  sessionId?: UUID;
+}
+
+export interface GuestAccessTokenPayload {
+  guestId: UUID;
 }
 
 
-export function generateAccessToken(payload: AccessTokenPayload) {
+export function generateAccessToken(payload: AccessTokenPayload | GuestAccessTokenPayload) {
   return jwt.sign(payload, config.jwt.accessTokenSecret, { expiresIn: config.jwt.accessTokenLifetime });
 }
 
-export function generateRefreshToken(payload: RefreshTokenPayload) {
+export function generateRefreshToken(payload: RefreshTokenPayload | GuestRefreshTokenPayload) {
   return jwt.sign(payload, config.jwt.refreshTokenSecret, { expiresIn: config.jwt.refreshTokenLifetime });
 }
 
@@ -32,9 +39,10 @@ export function verifyAccessToken(token: string): AccessTokenPayload | null {
   }
 }
 
-export function verifyRefreshToken(token: string): RefreshTokenPayload | null {
+export function verifyRefreshToken(token: string): RefreshTokenPayload | GuestRefreshTokenPayload | null {
   try {
-    return jwt.verify(token, config.jwt.refreshTokenSecret) as RefreshTokenPayload;
+    const verifiedToken = jwt.verify(token, config.jwt.refreshTokenSecret);
+    return verifiedToken as RefreshTokenPayload | GuestRefreshTokenPayload;
   } catch {
     return null;
   }

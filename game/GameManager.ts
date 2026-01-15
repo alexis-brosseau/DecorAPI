@@ -94,7 +94,7 @@ export default class GameManager {
       try {
         const identity = Identity.require(
           (token as any).userId ?? null,
-          (token as any).sessionId ?? null,
+          (token as any).guestId ?? null,
           (token as any).role
         );
 
