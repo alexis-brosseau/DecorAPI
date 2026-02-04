@@ -12,10 +12,12 @@ export default interface User {
 export class UserRole {
     static ADMIN = new UserRole('admin')
     static USER = new UserRole('user')
+    static GUEST = new UserRole('guest')
 
     private static roleHierarchy = [
         'admin',
-        'user'
+        'user',
+        'guest'
     ]
 
     public readonly value: string;
@@ -41,6 +43,7 @@ export class UserRole {
         switch (value) {
             case 'admin': return UserRole.ADMIN;
             case 'user': return UserRole.USER;
+            case 'guest': return UserRole.GUEST;
             default: return null;
         }
     }

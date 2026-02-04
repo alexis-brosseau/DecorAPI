@@ -2,7 +2,6 @@ import type { Request, Response } from 'express';
 import type Database from '../dal/database.js';
 import type { AccessTokenPayload } from './tokens.js';
 import type { UUID } from 'crypto';
-import { Identity, IdentityRole } from './identity.js';
 
 export default interface HttpContext {
   req: Request;
@@ -10,8 +9,8 @@ export default interface HttpContext {
   body?: any;
   query?: Record<string, any>;
   db?: Database;
-  token?: AccessTokenPayload;
-  identity?: Identity;
+  token?: AccessTokenPayload | null;
+  userId: UUID | null;
 }
 
 export class InternalServerError extends Error {
@@ -69,10 +68,4 @@ export function ensureToken(token?: AccessTokenPayload | null) {
 export function ensureQuery(query?: Record<string, any>) {
   if (!query) throw new BadRequestError('Query not found in HttpContext');
   return query;
-}
-
-export function ensureIdentity(identity?: Identity | null, requiredRole?: IdentityRole): Identity {
-  if (!identity) throw new UnauthorizedError();
-  if (requiredRole && !identity.hasRole(requiredRole)) throw new ForbiddenError('Insufficient permissions');
-  return identity;
 }

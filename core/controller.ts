@@ -3,7 +3,8 @@ import type { Router, Request, Response, NextFunction } from 'express';
 import type HttpContext from './httpContext.js';
 import { transaction } from '../dal/database.js';
 import { UnauthorizedError, ForbiddenError, BadRequestError } from './httpContext.js';
-import { Identity } from './identity.js';
+import { UserRole } from '../dal/models/user.js';
+import { verifyAccessToken } from './tokens.js';
 
 export interface RouteDefinition {
   method: keyof Router;
@@ -47,12 +48,8 @@ function createRouteDecorator(method: keyof Router) {
         const ctx: HttpContext = {
           req,
           res,
-          token: (req as any).token ?? null,
-          identity: (req as any).identity ?? Identity.fromAuth(
-            (req as any).userId,
-            (req as any).guestId,
-            (req as any).role
-          ),
+          token: req.token ?? null,
+          userId: req.userId ?? null,
         };
 
         await original.call(this, ctx);
@@ -220,6 +217,50 @@ export const query = (fields: { [key: string]: FieldDefinition }) => (target: an
     }
     
     await originalMethod.call(this, { ...ctx, query: validatedQuery }, ...args);
+  }
+}
+
+///////////////////////////////////////
+// Decorator for protected routes
+////////////////////////////////////////
+
+// Take a UserRole and checks if the user has sufficient role to access the route
+// Add a 'user' property to the HttpContext
+export function auth(role: UserRole) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    
+    descriptor.value = async function (ctx: HttpContext, ...args: any[]) {
+      const { req, res } = ctx;
+
+      const authHeader = req.headers.authorization;
+      if (!authHeader) {
+        res.status(401).send("Unauthorized");
+        return;
+      }
+
+      const [type, accessToken] = authHeader.split(' ');
+      if (type !== 'Bearer') {
+        res.status(400).send("Invalid token type");
+        return;
+      }
+      if (!accessToken) {
+        res.status(400).send("Invalid token");
+        return;
+      }
+
+      const token = verifyAccessToken(accessToken);
+      if (!token) {
+        res.status(401).send("Invalid or expired token");
+        return;
+      }
+
+      if (token.role < role) {
+        return res.status(403).send("Forbidden");
+      }
+
+      await originalMethod.call(this, { ...ctx, token }, ...args);
+    }
   }
 }
 

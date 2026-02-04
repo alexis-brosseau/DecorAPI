@@ -2,32 +2,23 @@ import type { UUID } from 'crypto';
 
 import { config } from '../global.js';
 import jwt from 'jsonwebtoken';
-import type { IdentityRole } from './identity.js';
+import type { UserRole } from '../dal/models/user.js';
 
 export interface RefreshTokenPayload {
   userId: UUID;
   version: number;
 }
 
-export interface GuestRefreshTokenPayload {
-  guestId: UUID;
-}
-
 export interface AccessTokenPayload {
   userId?: UUID;
-  role?: IdentityRole;
+  role?: UserRole;
 }
 
-export interface GuestAccessTokenPayload {
-  guestId: UUID;
-}
-
-
-export function generateAccessToken(payload: AccessTokenPayload | GuestAccessTokenPayload) {
+export function generateAccessToken(payload: AccessTokenPayload) {
   return jwt.sign(payload, config.jwt.accessTokenSecret, { expiresIn: config.jwt.accessTokenLifetime });
 }
 
-export function generateRefreshToken(payload: RefreshTokenPayload | GuestRefreshTokenPayload) {
+export function generateRefreshToken(payload: RefreshTokenPayload) {
   return jwt.sign(payload, config.jwt.refreshTokenSecret, { expiresIn: config.jwt.refreshTokenLifetime });
 }
 
@@ -39,10 +30,10 @@ export function verifyAccessToken(token: string): AccessTokenPayload | null {
   }
 }
 
-export function verifyRefreshToken(token: string): RefreshTokenPayload | GuestRefreshTokenPayload | null {
+export function verifyRefreshToken(token: string): RefreshTokenPayload | null {
   try {
     const verifiedToken = jwt.verify(token, config.jwt.refreshTokenSecret);
-    return verifiedToken as RefreshTokenPayload | GuestRefreshTokenPayload;
+    return verifiedToken as RefreshTokenPayload;
   } catch {
     return null;
   }

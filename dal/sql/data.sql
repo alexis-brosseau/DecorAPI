@@ -7,3 +7,4 @@ VALUES (
     crypt('password', gen_salt('bf'))
 )
 ON CONFLICT DO NOTHING;
+COMMIT;

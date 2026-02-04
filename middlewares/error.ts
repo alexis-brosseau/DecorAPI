@@ -4,6 +4,8 @@ import { DatabaseError } from "pg";
 import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError } from '../core/httpContext.js';
 
 const errorHanlder = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  // TODO: look if a switch case is better here
+  
   // Bad JSON
   if (err instanceof SyntaxError && "body" in err) {
     return res.status(400).json("Invalid JSON payload");

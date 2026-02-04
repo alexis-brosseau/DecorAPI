@@ -1,28 +1,19 @@
-import Controller, { get, post, body, useTransaction } from '../core/controller.js';
+import Controller, { post, body, useTransaction, auth } from '../core/controller.js';
 import type HttpContext from '../core/httpContext.js';
-import { ensureDb, UnauthorizedError, ensureIdentity } from '../core/httpContext.js';
+import { UnauthorizedError } from '../core/httpContext.js';
 import { config, Environment } from '../global.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../core/tokens.js';
 import { createUser, authUser, getUser } from '../services/user.js';
 import { randomUUID } from 'crypto';
-import { Identity, IdentityRole } from '../core/identity.js';
+import { UserRole } from '../dal/models/user.js';
 
 export default class AuthController extends Controller {
-
-  @post("/all")
-  @useTransaction()
-  async all({ res, db }: HttpContext) {
-    db = ensureDb(db);
-    const users = await db.user.query('SELECT id, username, email, role, token_version, created_at FROM "user"');
-    res.status(200).json({ users });
-  }
 
   @post("/register")
   @body({ username: String, email: String, password: String })
   @useTransaction()
   async register({ res, body, db }: HttpContext) {
     const { username, email, password } = body;
-    db = ensureDb(db);
 
     const user = await createUser(username, email, password, db);
 
@@ -35,7 +26,6 @@ export default class AuthController extends Controller {
   @useTransaction()
   async login({ res, body, db }: HttpContext) {
     const { email, password } = body;
-    db = ensureDb(db);
 
     const user = await authUser(email, password, db);
     if (!user) throw new UnauthorizedError('Invalid email or password');
@@ -63,16 +53,7 @@ export default class AuthController extends Controller {
   @post("/guest")
   async guest({ res }: HttpContext) {
 
-    const guestId = randomUUID();
-    const refreshToken = generateRefreshToken({ 
-      guestId: guestId,
-    });
-
-    // Generate access token for the guest
-    const accessToken = generateAccessToken({ 
-      guestId: guestId,
-      role: IdentityRole.GUEST,
-    });
+    // TODO: create a guest account in the DB
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -86,9 +67,9 @@ export default class AuthController extends Controller {
 
 
   @post("/refresh")
+  @auth(UserRole.GUEST)
   @useTransaction()
   async refresh({ res, req, db }: HttpContext) {
-    db = ensureDb(db);
 
     const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) throw new UnauthorizedError('Credentials not provided');
@@ -98,22 +79,10 @@ export default class AuthController extends Controller {
     
     let accessToken;
 
-    if (!('userId' in token) && !('guestId' in token)) {
-      throw new UnauthorizedError('Unauthorized');
-    }
-
-    if ('guestId' in token) {
-      accessToken = generateAccessToken({
-        guestId: token.guestId,
-        role: IdentityRole.GUEST,
-      });
-      res.json({ accessToken });
-      return;
-    }
-
     const user = await getUser(token.userId, db);
     if (!user || user.tokenVersion !== token.version) throw new UnauthorizedError('Unauthorized');
-
+    
+    // TODO: maybe change userid for account id and change database user for account
     accessToken = generateAccessToken({ 
       userId: user.id,
       role: user.role,
@@ -122,8 +91,9 @@ export default class AuthController extends Controller {
   }
 
   @post("/logout")
-  async logout({ res, identity }: HttpContext) {
-    ensureIdentity(identity, IdentityRole.USER)
+  @auth(UserRole.USER)
+  async logout({ res }: HttpContext) {
+
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: config.environment === Environment.Production,
