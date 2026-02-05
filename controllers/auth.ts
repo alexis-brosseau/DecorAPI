@@ -3,8 +3,7 @@ import type HttpContext from '../core/httpContext.js';
 import { UnauthorizedError } from '../core/httpContext.js';
 import { config, Environment } from '../global.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../core/tokens.js';
-import { createUser, authUser, getUser } from '../services/user.js';
-import { randomUUID } from 'crypto';
+import { createUser, authUser, getUser, createGuest } from '../services/user.js';
 import { UserRole } from '../dal/models/user.js';
 
 export default class AuthController extends Controller {
@@ -17,7 +16,7 @@ export default class AuthController extends Controller {
 
     const user = await createUser(username, email, password, db);
 
-    // Change to sends email with verification link in production
+    // TODO: send  email with verification link in production
     res.status(201).json({ user });
   }
 
@@ -51,9 +50,20 @@ export default class AuthController extends Controller {
   }
 
   @post("/guest")
-  async guest({ res }: HttpContext) {
+  @useTransaction()
+  async guest({ res, db }: HttpContext) {
+    const guestUsername = `Guest ${Math.floor(Math.random() * 10000)}`;
+    const guest = await createGuest(guestUsername, db);
 
-    // TODO: create a guest account in the DB
+    const refreshToken = generateRefreshToken({ 
+      userId: guest.id, 
+      version: guest.tokenVersion 
+    });
+    
+    const accessToken = generateAccessToken({ 
+      userId: guest.id,
+      role: guest.role,
+    });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -64,7 +74,6 @@ export default class AuthController extends Controller {
 
     res.status(201).json({ accessToken });
   }
-
 
   @post("/refresh")
   @auth(UserRole.GUEST)
@@ -82,7 +91,6 @@ export default class AuthController extends Controller {
     const user = await getUser(token.userId, db);
     if (!user || user.tokenVersion !== token.version) throw new UnauthorizedError('Unauthorized');
     
-    // TODO: maybe change userid for account id and change database user for account
     accessToken = generateAccessToken({ 
       userId: user.id,
       role: user.role,

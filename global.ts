@@ -1,20 +1,6 @@
 import dotenv from "dotenv";
 
-export enum Environment {
-  Development = "development",
-  Production = "production",
-}
-
-dotenv.config({
-  // keep default behavior; avoid non-standard options
-});
-
-function parseEnvironment(raw: unknown): Environment {
-  const value = String(raw ?? '').toLowerCase();
-  if (value === Environment.Production || value === 'prod') return Environment.Production;
-  if (value === Environment.Development || value === 'dev') return Environment.Development;
-  return Environment.Development;
-}
+dotenv.config();
 
 export const config = {
   environment: parseEnvironment(process.env.ENVIRONMENT),
@@ -34,10 +20,6 @@ export const config = {
     refreshTokenSecret: String(process.env.REFRESH_TOKEN_SECRET),
     accessTokenLifetime: 10 * 60, // 10 minutes
     refreshTokenLifetime: 30 * 24 * 60 * 60, // 30 days
-  },
-  recording: {
-    allowedFormats: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav'],
-    allowedExtensions: ['.mp3', '.wav'],
   },
   serverTimezoneOffset: new Date().getTimezoneOffset(),
 };
@@ -77,4 +59,16 @@ export const ansi = {
     cyan: "\x1b[46m",
     white: "\x1b[47m",
   }
+}
+
+export enum Environment {
+  Development = "development",
+  Production = "production",
+}
+
+function parseEnvironment(raw: unknown): Environment {
+  const value = String(raw ?? '').toLowerCase();
+  if (value === Environment.Production || value === 'prod') return Environment.Production;
+  if (value === Environment.Development || value === 'dev') return Environment.Development;
+  return Environment.Development;
 }

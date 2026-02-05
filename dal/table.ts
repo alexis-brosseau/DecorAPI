@@ -11,6 +11,16 @@ export default class Table {
     this.name = name;
   }
 
+  async query(sql: string, params: any[] = []): Promise<any[]> {
+    try {
+      const result: QueryResult = await this.client.query(sql, params);
+      return result.rows;
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  }
+
+
   protected async call(procedure: string, params: Record<string, any> = {}): Promise<any[]> {
     const paramKeys = Object.keys(params);
     const paramPlaceholders = paramKeys.map((_, index) => `$${index + 1}`).join(', ');
@@ -19,15 +29,6 @@ export default class Table {
 
     try {
       const result: QueryResult = await this.client.query(query, paramValues);
-      return result.rows;
-    } catch (error: any) {
-      throw this.handleError(error);
-    }
-  }
-
-  async query(sql: string, params: any[] = []): Promise<any[]> {
-    try {
-      const result: QueryResult = await this.client.query(sql, params);
       return result.rows;
     } catch (error: any) {
       throw this.handleError(error);

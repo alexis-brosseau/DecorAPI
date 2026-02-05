@@ -1,6 +1,6 @@
--- DROP DATABASE IF EXISTS catan;
+-- DROP DATABASE IF EXISTS webgames;
 
-CREATE DATABASE catan
+CREATE DATABASE webgames
     WITH
     OWNER = postgres
     ENCODING = 'UTF8'

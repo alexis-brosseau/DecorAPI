@@ -9,8 +9,7 @@ export default interface HttpContext {
   body?: any;
   query?: Record<string, any>;
   db?: Database;
-  token?: AccessTokenPayload | null;
-  userId: UUID | null;
+  token?: AccessTokenPayload;
 }
 
 export class InternalServerError extends Error {
@@ -68,4 +67,9 @@ export function ensureToken(token?: AccessTokenPayload | null) {
 export function ensureQuery(query?: Record<string, any>) {
   if (!query) throw new BadRequestError('Query not found in HttpContext');
   return query;
+}
+
+export function ensureBody(body?: any) {
+  if (!body) throw new BadRequestError('Body not found in HttpContext');
+  return body;
 }

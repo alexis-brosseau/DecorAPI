@@ -8,11 +8,10 @@ class Logger {
 
   constructor() {
     this.logDir = path.join(process.cwd(), 'logs');
-    this.initLogDir();
   }
 
-  async initLogDir() {
-    if (!config.saveLogs) return; // Skip the creation
+  async initialize() {
+    if (!config.saveLogs) return; // Skip the initialization
 
     try {
       await fs.mkdir(this.logDir, { recursive: true });
@@ -156,4 +155,6 @@ class Logger {
   }
 }
 
-export default new Logger(); // Export singleton instance
+const logger = new Logger();
+await logger.initialize();
+export default logger;

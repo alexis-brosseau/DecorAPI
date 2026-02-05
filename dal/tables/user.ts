@@ -14,8 +14,8 @@ export default class UserTable extends Table {
     return {
       id: data.id,
       username: data.username,
+      role: UserRole.fromString(data.role) || data.role,
       email: data.email,
-      role: UserRole.fromString(data.role) || UserRole.USER,
       tokenVersion: data.token_version,
       createdAt: new Date(data.created_at),
     };
@@ -27,15 +27,20 @@ export default class UserTable extends Table {
     return this.mapRow(data);
   }
 
-  async create({ id, username, email, password }: { id?: UUID; username: string; email: string; password: string; }): Promise<User> {
+  async createUser({ id, username, email, password }: { 
+    id: UUID; 
+    username: string; 
+    email: string; 
+    password: string; 
+  }): Promise<User> {
     const sql = `
-      INSERT INTO "user" (id, username, email, hash)
-      VALUES ($1, $2, $3, crypt($4, gen_salt('bf')))
+      INSERT INTO "user" (id, username, role, email, hash)
+      VALUES ($1, $2, $3, $4, crypt($5, gen_salt('bf')))
       RETURNING id, username, email, role, token_version, created_at
     `;
 
     try {
-      const rows = await super.query(sql, [id || null, username, email, password]);
+      const rows = await super.query(sql, [id, username, UserRole.USER, email, password]);
       const data = rows[0];
       if (!data) throw new Error('Failed to create user');
       
@@ -48,6 +53,23 @@ export default class UserTable extends Table {
     }
   }
 
+  async createGuest({ id, username }: { 
+    id: UUID; 
+    username: string; 
+  }): Promise<User> {
+    const sql = `
+      INSERT INTO "user" (id, username, role)
+      VALUES ($1, $2, $3)
+      RETURNING id, username, email, role, token_version, created_at
+    `;
+
+    const rows = await super.query(sql, [id, username, UserRole.GUEST]);
+    const data = rows[0];
+    if (!data) throw new Error('Failed to create guest user');
+    
+    return this.mapRow(data);
+  }
+  
   async auth(email: string, password: string): Promise<User | null> {
     const sql = `
       SELECT id, username, email, role, token_version, created_at

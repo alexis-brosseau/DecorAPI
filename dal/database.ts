@@ -2,10 +2,6 @@ import { Pool, DatabaseError } from 'pg';
 import type { PoolClient } from 'pg';
 import { config } from '../global.js';
 import UserTable from './tables/user.js';
-import CatanGameTable from './tables/catan/catanGame.js';
-import CatanGamePlayerTable from './tables/catan/catanGamePlayer.js';
-import CatanGameStateTable from './tables/catan/catanGameState.js';
-import CatanChatMessageTable from './tables/catan/catanChatMessage.js';
 
 const DB_POOL = new Pool({
   host: config.db.host,
@@ -17,17 +13,9 @@ const DB_POOL = new Pool({
 
 export default class Database {
   public user: UserTable;
-  public catanGame: CatanGameTable;
-  public catanGamePlayer: CatanGamePlayerTable;
-  public catanGameState: CatanGameStateTable;
-  public catanChatMessage: CatanChatMessageTable;
 
   constructor(client: PoolClient) {
     this.user = new UserTable(client);
-    this.catanGame = new CatanGameTable(client);
-    this.catanGamePlayer = new CatanGamePlayerTable(client);
-    this.catanGameState = new CatanGameStateTable(client);
-    this.catanChatMessage = new CatanChatMessageTable(client);
   }
 }
 

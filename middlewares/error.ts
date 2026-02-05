@@ -3,7 +3,7 @@ import Logger from "../core/logger.js";
 import { DatabaseError } from "pg";
 import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError } from '../core/httpContext.js';
 
-const errorHanlder = (err: Error, req: Request, res: Response, next: NextFunction) => {
+function errorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
   // TODO: look if a switch case is better here
   
   // Bad JSON
@@ -49,4 +49,4 @@ const errorHanlder = (err: Error, req: Request, res: Response, next: NextFunctio
 };
 
 
-export default errorHanlder;
+export default errorMiddleware;

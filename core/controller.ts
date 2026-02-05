@@ -43,16 +43,18 @@ function createRouteDecorator(method: keyof Router) {
 
       const original = descriptor.value;
 
-      // Replace the handler to automatically wrap req/res into ctx
       descriptor.value = async function (req: Request, res: Response, next: NextFunction) {
         const ctx: HttpContext = {
           req,
           res,
-          token: req.token ?? null,
-          userId: req.userId ?? null,
+          token: req.token,
         };
 
-        await original.call(this, ctx);
+        try {
+          await original.call(this, ctx);
+        } catch (err) {
+          next(err);
+        }
       };
 
       target.constructor.routes.push({ method, path, handler: propertyKey });
@@ -154,7 +156,7 @@ function schemaLabel(schema: Schema): string {
 export const body = (fields: { [key: string]: FieldDefinition }) => (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
   const originalMethod = descriptor.value;
   descriptor.value = async function (ctx: HttpContext, ...args: any[]) {
-    const { req, res } = ctx;
+    const { req } = ctx;
     const validatedBody: Record<string, any> = {};
 
     for (const [field, type] of Object.entries(fields)) {
@@ -162,26 +164,22 @@ export const body = (fields: { [key: string]: FieldDefinition }) => (target: any
 
       if (value === undefined) {
         if (type instanceof OptionalConstructor) continue;
-        res.status(400).send(`Missing required field: ${field}`);
-        return;
+        throw new BadRequestError(`Missing required field: ${field}`);
       }
 
       const schema = type instanceof OptionalConstructor ? type.type : type;
       if (!hasValidator(schema)) {
-        res.status(500).send(`Unknown type for field ${field}`);
-        return;
+        throw new BadRequestError(`Unknown type for field ${field}`);
       }
 
       if (!isValidSchema(value, schema)) {
-        res.status(400).send(`Field ${field} must be of type ${schemaLabel(schema)}`);
-        return;
+        throw new BadRequestError(`Field ${field} must be of type ${schemaLabel(schema)}`);
       }
-      
-      // Add to validated body
+
       validatedBody[field] = value;
     }
-    
-    await originalMethod.call(this, { ...ctx, body: validatedBody }, ...args);
+
+    return await originalMethod.call(this, { ...ctx, body: validatedBody }, ...args);
   }
 }
 
@@ -189,7 +187,7 @@ export const body = (fields: { [key: string]: FieldDefinition }) => (target: any
 export const query = (fields: { [key: string]: FieldDefinition }) => (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
   const originalMethod = descriptor.value;
   descriptor.value = async function (ctx: HttpContext, ...args: any[]) {
-    const { req, res } = ctx;
+    const { req } = ctx;
     const validatedQuery: Record<string, any> = {};
 
     for (const [field, type] of Object.entries(fields)) {
@@ -197,26 +195,22 @@ export const query = (fields: { [key: string]: FieldDefinition }) => (target: an
 
       if (value === undefined) {
         if (type instanceof OptionalConstructor) continue;
-        res.status(400).send(`Missing required query parameter: ${field}`);
-        return;
+        throw new BadRequestError(`Missing required query parameter: ${field}`);
       }
 
       const schema = type instanceof OptionalConstructor ? type.type : type;
       if (!hasValidator(schema)) {
-        res.status(500).send(`Unknown type for query parameter ${field}`);
-        return;
+        throw new BadRequestError(`Unknown type for query parameter ${field}`);
       }
 
       if (!isValidSchema(value, schema)) {
-        res.status(400).send(`Query parameter ${field} must be of type ${schemaLabel(schema)}`);
-        return;
+        throw new BadRequestError(`Query parameter ${field} must be of type ${schemaLabel(schema)}`);
       }
-      
-      // Add to validated query
+
       validatedQuery[field] = value;
     }
-    
-    await originalMethod.call(this, { ...ctx, query: validatedQuery }, ...args);
+
+    return await originalMethod.call(this, { ...ctx, query: validatedQuery }, ...args);
   }
 }
 
@@ -229,37 +223,23 @@ export const query = (fields: { [key: string]: FieldDefinition }) => (target: an
 export function auth(role: UserRole) {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
-    
+
     descriptor.value = async function (ctx: HttpContext, ...args: any[]) {
-      const { req, res } = ctx;
+      const { req } = ctx;
 
       const authHeader = req.headers.authorization;
-      if (!authHeader) {
-        res.status(401).send("Unauthorized");
-        return;
-      }
+      if (!authHeader) throw new UnauthorizedError("Unauthorized");
 
       const [type, accessToken] = authHeader.split(' ');
-      if (type !== 'Bearer') {
-        res.status(400).send("Invalid token type");
-        return;
-      }
-      if (!accessToken) {
-        res.status(400).send("Invalid token");
-        return;
-      }
+      if (type !== 'Bearer') throw new BadRequestError("Invalid token type");
+      if (!accessToken) throw new BadRequestError("Invalid token");
 
       const token = verifyAccessToken(accessToken);
-      if (!token) {
-        res.status(401).send("Invalid or expired token");
-        return;
-      }
+      if (!token) throw new UnauthorizedError("Invalid or expired token");
 
-      if (token.role < role) {
-        return res.status(403).send("Forbidden");
-      }
+      if (!token.role || token.role < role) throw new ForbiddenError("Forbidden");
 
-      await originalMethod.call(this, { ...ctx, token }, ...args);
+      return await originalMethod.call(this, { ...ctx, token }, ...args);
     }
   }
 }
@@ -274,8 +254,8 @@ export function auth(role: UserRole) {
 export const useTransaction = () => (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
   const originalMethod = descriptor.value;
   descriptor.value = async function (ctx: HttpContext, ...args: any[]) {
-    await transaction(async (db) => {
-      await originalMethod.call(this, { ...ctx, db }, ...args);
+    return await transaction(async (db) => {
+      return await originalMethod.call(this, { ...ctx, db }, ...args);
     });
   };
 }

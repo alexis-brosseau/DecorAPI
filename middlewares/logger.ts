@@ -2,7 +2,7 @@ import Logger from "../core/logger.js";
 import { randomUUID } from 'crypto';
 import type { Request, Response, NextFunction } from 'express';
 
-const loggerHandler = (req: Request, res: Response, next: NextFunction) => {
+function loggerMiddleware(req: Request, res: Response, next: NextFunction) {
   // Assign UUID and IP to request
   res.locals.uuid = randomUUID();
   res.locals.ip = req.headers['x-forwarded-for'] || (req.socket.remoteAddress === "::1" ? "localhost" : req.socket.remoteAddress);
@@ -41,4 +41,4 @@ const loggerHandler = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-export default loggerHandler;
+export default loggerMiddleware;

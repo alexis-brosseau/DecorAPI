@@ -8,14 +8,25 @@ export async function createUser(
   email: string,
   password: string,
   db?: Database,
-  id?: UUID
 ): Promise<User> {
   return executeWithDb(db, async (database) => {
-    return await database.user.create({
-      ...(id ? { id } : {}),
+    return await database.user.createUser({
+      id: crypto.randomUUID(),
       username,
       email,
       password,
+    });
+  });
+}
+
+export async function createGuest(
+  username: string,
+  db?: Database,
+): Promise<User> {
+  return executeWithDb(db, async (database) => {
+    return await database.user.createGuest({
+      id: crypto.randomUUID(),
+      username,
     });
   });
 }

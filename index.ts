@@ -4,32 +4,46 @@ import * as os from "os";
 import http from "http";
 import Logger from './core/logger.js';
 import cookieParser from 'cookie-parser';
-import loggerHandler from "./middlewares/logger.js";
-import corsHandler from "./middlewares/cors.js";
-import controllerRouter from './middlewares/controller.js';
-import errorHandler from './middlewares/error.js';
-import { authMiddleware } from "./middlewares/auth.js";
-import GameManager from "./game/GameManager.js";
-import CatanGame from "./game/catan/CatanGame.js";
+import loggerMiddleware from "./middlewares/logger.js";
+import corsMiddleware from "./middlewares/cors.js";
+import controllerMiddleware from './middlewares/controller.js';
+import errorMiddleware from './middlewares/error.js';
+import authMiddleware from "./middlewares/auth.js";
+import rateLimit from 'express-rate-limit';
+
+import type { AccessTokenPayload } from "./core/tokens.js";
+
+declare global {
+  namespace Express {
+    interface Request {
+      token?: AccessTokenPayload;
+    }
+  }
+}
 
 const app = express();
 export const server = http.createServer(app);
 
+const rateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 5 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    status: 429,
+    error: 'Too many requests, please try again later.',
+  },
+});
+app.use(rateLimiter);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(loggerHandler);
-app.use(corsHandler);
+app.use(loggerMiddleware);
+app.use(corsMiddleware);
 app.use(authMiddleware);
-
-app.use(controllerRouter);
+app.use(controllerMiddleware);
 
 // Error handling middleware should be the last one
-app.use(errorHandler);
-
-const gameManager = new GameManager();
-gameManager.register('/ws/catan', () => new CatanGame());
-gameManager.attach(server);
+app.use(errorMiddleware);
 
 server.listen(config.port, () => {
   showServerInfos();

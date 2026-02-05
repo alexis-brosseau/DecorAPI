@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath, pathToFileURL } from 'url';
 
-const controllerRouter = express.Router();
+const controllerMiddleware = express.Router();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,7 +23,7 @@ for (const file of fs.readdirSync(controllersDir)) {
 
   const { default: Controller } = await import(moduleUrl);
   const controller = new Controller();
-  controllerRouter.use(mountPath, controller.router);
+  controllerMiddleware.use(mountPath, controller.router);
 }
 
-export default controllerRouter;
+export default controllerMiddleware;

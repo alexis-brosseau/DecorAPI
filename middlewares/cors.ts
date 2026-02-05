@@ -2,7 +2,7 @@ import express from "express";
 import type { Request, Response, NextFunction } from 'express';
 import { config, Environment } from '../global.js';
 
-const corsHandler = (req: Request, res: Response, next: NextFunction) => {
+function corsMiddleware(req: Request, res: Response, next: NextFunction) {
   if (config.environment === Environment.Development)
     allowAllAnonymousAccess(req, res);
   else
@@ -47,4 +47,4 @@ function allowAllAnonymousAccess(req: Request, res: Response) {
   res.header('Access-Control-Allow-Credentials', 'true');
 }
 
-export default corsHandler;
+export default corsMiddleware;
