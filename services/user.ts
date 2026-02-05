@@ -1,6 +1,7 @@
 import type Database from '../dal/database.js';
 import { executeWithDb } from '../dal/database.js';
 import type { UUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import type User from '../dal/models/user.js';
 
 export async function createUser(
@@ -11,7 +12,7 @@ export async function createUser(
 ): Promise<User> {
   return executeWithDb(db, async (database) => {
     return await database.user.createUser({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       username,
       email,
       password,
@@ -25,7 +26,7 @@ export async function createGuest(
 ): Promise<User> {
   return executeWithDb(db, async (database) => {
     return await database.user.createGuest({
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       username,
     });
   });
