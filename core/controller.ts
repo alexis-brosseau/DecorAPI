@@ -237,7 +237,8 @@ export function auth(role: UserRole) {
       const token = verifyAccessToken(accessToken);
       if (!token) throw new UnauthorizedError("Invalid or expired token");
 
-      if (!token.role || token.role < role) throw new ForbiddenError("Forbidden");
+      const tokenRole = UserRole.fromString(token.role);
+      if (!tokenRole || tokenRole < role) throw new ForbiddenError("Forbidden");
 
       return await originalMethod.call(this, { ...ctx, token }, ...args);
     }

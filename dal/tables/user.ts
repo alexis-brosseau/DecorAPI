@@ -40,7 +40,7 @@ export default class UserTable extends Table {
     `;
 
     try {
-      const rows = await super.query(sql, [id, username, UserRole.USER, email, password]);
+      const rows = await super.query(sql, [id, username, UserRole.USER.toString(), email, password]);
       const data = rows[0];
       if (!data) throw new Error('Failed to create user');
       
@@ -63,7 +63,7 @@ export default class UserTable extends Table {
       RETURNING id, username, email, role, token_version, created_at
     `;
 
-    const rows = await super.query(sql, [id, username, UserRole.GUEST]);
+    const rows = await super.query(sql, [id, username, UserRole.GUEST.toString()]);
     const data = rows[0];
     if (!data) throw new Error('Failed to create guest user');
     

@@ -6,7 +6,7 @@ import type { UUID } from 'crypto';
 export default interface HttpContext {
   req: Request;
   res: Response;
-  body?: any;
+  body?: Record<string, any>;
   query?: Record<string, any>;
   db?: Database;
   token?: AccessTokenPayload;

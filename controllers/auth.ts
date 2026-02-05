@@ -1,6 +1,6 @@
 import Controller, { post, body, useTransaction, auth } from '../core/controller.js';
 import type HttpContext from '../core/httpContext.js';
-import { UnauthorizedError } from '../core/httpContext.js';
+import { ensureBody, UnauthorizedError } from '../core/httpContext.js';
 import { config, Environment } from '../global.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../core/tokens.js';
 import { createUser, authUser, getUser, createGuest } from '../services/user.js';
@@ -12,7 +12,7 @@ export default class AuthController extends Controller {
   @body({ username: String, email: String, password: String })
   @useTransaction()
   async register({ res, body, db }: HttpContext) {
-    const { username, email, password } = body;
+    const { username, email, password } = ensureBody(body);
 
     const user = await createUser(username, email, password, db);
 
@@ -24,7 +24,7 @@ export default class AuthController extends Controller {
   @body({ email: String, password: String })
   @useTransaction()
   async login({ res, body, db }: HttpContext) {
-    const { email, password } = body;
+    const { email, password } = ensureBody(body);
 
     const user = await authUser(email, password, db);
     if (!user) throw new UnauthorizedError('Invalid email or password');
@@ -36,7 +36,7 @@ export default class AuthController extends Controller {
 
     const accessToken = generateAccessToken({ 
       userId: user.id,
-      role: user.role,
+      role: user.role.toString(),
     });
 
     res.cookie('refreshToken', refreshToken, {
@@ -51,9 +51,10 @@ export default class AuthController extends Controller {
 
   @post("/guest")
   @useTransaction()
-  async guest({ res, db }: HttpContext) {
-    const guestUsername = `Guest ${Math.floor(Math.random() * 10000)}`;
-    const guest = await createGuest(guestUsername, db);
+  @body({ username: String })
+  async guest({ res, body, db }: HttpContext) {
+    const { username } = ensureBody(body);
+    const guest = await createGuest(username, db);
 
     const refreshToken = generateRefreshToken({ 
       userId: guest.id, 
@@ -62,7 +63,7 @@ export default class AuthController extends Controller {
     
     const accessToken = generateAccessToken({ 
       userId: guest.id,
-      role: guest.role,
+      role: guest.role.toString(),
     });
 
     res.cookie('refreshToken', refreshToken, {
@@ -93,7 +94,7 @@ export default class AuthController extends Controller {
     
     accessToken = generateAccessToken({ 
       userId: user.id,
-      role: user.role,
+      role: user.role.toString(),
     });
     res.json({ accessToken });
   }
