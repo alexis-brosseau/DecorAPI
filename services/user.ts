@@ -1,5 +1,5 @@
 import type Database from '../dal/database.js';
-import { executeWithDb } from '../core/utils/db.js';
+import { executeWithDb } from '../dal/database.js';
 import type { UUID } from 'crypto';
 import type User from '../dal/models/user.js';
 
