@@ -1,5 +1,17 @@
 import dotenv from "dotenv";
 
+export enum Environment {
+  Development = "development",
+  Production = "production",
+}
+
+function parseEnvironment(raw: unknown): Environment {
+  const value = String(raw ?? '').toLowerCase();
+  if (value === Environment.Production || value === 'prod') return Environment.Production;
+  if (value === Environment.Development || value === 'dev') return Environment.Development;
+  return Environment.Development;
+}
+
 dotenv.config();
 
 export const config = {
@@ -61,14 +73,3 @@ export const ansi = {
   }
 }
 
-export enum Environment {
-  Development = "development",
-  Production = "production",
-}
-
-function parseEnvironment(raw: unknown): Environment {
-  const value = String(raw ?? '').toLowerCase();
-  if (value === Environment.Production || value === 'prod') return Environment.Production;
-  if (value === Environment.Development || value === 'dev') return Environment.Development;
-  return Environment.Development;
-}
