@@ -12,13 +12,6 @@ export default interface HttpContext {
   token?: AccessTokenPayload;
 }
 
-export class InternalServerError extends Error {
-  constructor(message = 'Internal Server Error') {
-    super(message);
-    this.name = 'InternalServerError';
-  }
-}
-
 export class UnauthorizedError extends Error {
   constructor(message = 'Authentication required') {
     super(message);

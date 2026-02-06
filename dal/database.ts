@@ -43,8 +43,8 @@ export async function transaction<T>(callback: (db: Database) => Promise<T>): Pr
  * @returns The result of the callback
  */
 export async function executeWithDb<T>(
-  db: Database | undefined,
-  callback: (db: Database) => Promise<T>
+  callback: (db: Database) => Promise<T>,
+  db?: Database
 ): Promise<T> {
   if (db) {
     // Use existing transaction/connection

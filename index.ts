@@ -32,19 +32,23 @@ const rateLimiter = rateLimit({
     error: 'Too many requests, please try again later.',
   },
 });
+
+// Middlewares Stack - Order matters!
 app.use(rateLimiter);
+
+app.use(loggerMiddleware);
+app.use(corsMiddleware);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(loggerMiddleware);
-app.use(corsMiddleware);
+
 app.use(authMiddleware);
 app.use(controllerMiddleware);
 
-// Error handling middleware should be the last one
-app.use(errorMiddleware);
+app.use(errorMiddleware); // Error handling middleware should be the last one
 
+// Start the server
 server.listen(config.port, () => {
   showServerInfos();
 });

@@ -10,26 +10,26 @@ export async function createUser(
   password: string,
   db?: Database,
 ): Promise<User> {
-  return executeWithDb(db, async (database) => {
+  return executeWithDb(async (database) => {
     return await database.user.createUser({
       id: randomUUID(),
       username,
       email,
       password,
     });
-  });
+  }, db);
 }
 
 export async function createGuest(
   username: string,
   db?: Database,
 ): Promise<User> {
-  return executeWithDb(db, async (database) => {
+  return executeWithDb(async (database) => {
     return await database.user.createGuest({
       id: randomUUID(),
       username,
     });
-  });
+  }, db);
 }
 
 export async function authUser(
@@ -37,16 +37,16 @@ export async function authUser(
   password: string,
   db?: Database
 ): Promise<User | null> {
-  return executeWithDb(db, async (database) => {
+  return executeWithDb(async (database) => {
     return await database.user.auth(email, password);
-  });
+  }, db);
 }
 
 export async function getUser(
   id: UUID,
   db?: Database
 ): Promise<User | null> {
-  return executeWithDb(db, async (database) => {
+  return executeWithDb(async (database) => {
     return await database.user.get(id);
-  });
+  }, db);
 }
