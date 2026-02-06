@@ -85,18 +85,9 @@ import Controller, { get, post, body } from '../core/controller.js';
 import type HttpContext from '../core/httpContext.js';
 
 export default class UserController extends Controller {
-  @get('/users/:id')
-  async getUser({ req, res }: HttpContext) {
-    const userId = req.params.id;
-    const user = await getUser(userId);
-    res.json({ user });
-  }
-
-  @post('/users')
-  @body({ username: String, email: Email, age: Number })
+  @get('/path')
   async createUser({ res, body }: HttpContext) {
-    const user = await createUser(body.username, body.email, body.age);
-    res.status(201).json({ user });
+    res.status(200).send("Hello world!");
   }
 }
 ```
@@ -105,6 +96,8 @@ export default class UserController extends Controller {
 
 ```typescript
 import { body, Email, UUID, Optional, ArrayOf } from '../core/controller.js';
+import type HttpContext from '../core/httpContext.js';
+import { ensureBody } from '../core/httpContext.js';
 
 @post('/register')
 @body({
@@ -117,7 +110,7 @@ import { body, Email, UUID, Optional, ArrayOf } from '../core/controller.js';
 })
 async register({ res, body }: HttpContext) {
   // body is type-safe and validated
-  const { username, email, password, age, tags, userId } = body;
+  const { username, email, password, age, tags, userId } = ensureBody(body);
   // ...
 }
 ```
@@ -126,6 +119,8 @@ async register({ res, body }: HttpContext) {
 
 ```typescript
 import { query, Optional } from '../core/controller.js';
+import type HttpContext from '../core/httpContext.js';
+import { ensureQuery } from '../core/httpContext.js';
 
 @get('/search')
 @query({
@@ -134,7 +129,7 @@ import { query, Optional } from '../core/controller.js';
   offset: Optional(Number)
 })
 async search({ res, query }: HttpContext) {
-  const { term, limit = 10, offset = 0 } = query;
+  const { term, limit = 10, offset = 0 } = ensureQuery(query);
   // ...
 }
 ```
@@ -145,12 +140,13 @@ async search({ res, query }: HttpContext) {
 import { auth } from '../core/controller.js';
 import { UserRole } from '../dal/models/user.js';
 
-@get('/admin/users')
-@auth(UserRole.Admin)
-async getUsers({ res, token }: HttpContext) {
-  // Only accessible by Admin role
+@get('/me')
+@auth(UserRole.User)
+async getCurrentUser({ res, token }: HttpContext) {
+  // Only accessible by User role
   // token contains user information
-  res.json({ users: [] });
+  const { userId, role } = ensureToken(token);
+  // ...
 }
 ```
 
@@ -158,16 +154,16 @@ async getUsers({ res, token }: HttpContext) {
 
 ```typescript
 import { useTransaction } from '../core/controller.js';
+import { UserRole } from '../dal/models/user.js';
+import { getUsersByRole } from '../services/user.js';
 
 @post('/transfer')
 @useTransaction()
-async transfer({ res, body, db }: HttpContext) {
+async getAdmin({ res, db }: HttpContext) {
   // All database operations run in a single transaction
   // Automatically rolls back on error
-  await debitAccount(body.fromAccount, body.amount, db);
-  await creditAccount(body.toAccount, body.amount, db);
-  
-  res.json({ success: true });
+  await getUsersByRole(UserRole.Admin, db);
+  // ...
 }
 ```
 
@@ -184,14 +180,14 @@ export async function createUser(
   password: string,
   db?: Database
 ): Promise<User> {
-  return executeWithDb(db, async (database) => {
+  return executeWithDb(async (database) => {
     return await database.user.createUser({
       id: randomUUID(),
       username,
       email,
       password,
     });
-  });
+  }, db);
 }
 ```
 
@@ -200,12 +196,13 @@ export async function createUser(
 Built-in error classes with automatic HTTP status mapping:
 
 ```typescript
-import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError } from '../core/httpContext.js';
+import { BadRequestError, UnauthorizedError, ForbiddenError, NotFoundError, ConflictError } from '../core/httpContext.js';
 
 throw new BadRequestError('Invalid input');        // 400
 throw new UnauthorizedError('Not authenticated');  // 401
 throw new ForbiddenError('Access denied');         // 403
 throw new NotFoundError('Resource not found');     // 404
+throw new ConflictError('Email already used');     // 409
 ```
 
 ## Configuration
@@ -213,13 +210,19 @@ throw new NotFoundError('Resource not found');     // 404
 Create a `.env` file:
 
 ```env
-PORT=3000
+ENVIRONMENT=dev        (dev or prod)
+PORT=8800
+SAVE_LOGS=true/false   (Save logs in a file under /logs)
+DEBUG_MODE=true/false  (Output error stack in console)
+
 DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=postgres
 DB_USER=postgres
 DB_PASS=password
-DB_NAME=webgame
-DB_PORT=5432
-JWT_SECRET=your-secret-key
+
+ACCESS_TOKEN_SECRET=your_jwt_secret
+REFRESH_TOKEN_SECRET=your_jwt_secret
 ```
 
 ## Author
