@@ -34,10 +34,10 @@ npm start
 ## Middleware Stack
 
 1. Rate limiting
-2. Body parsing (JSON and URL-encoded)
-3. Cookie parsing
-4. Request logging
-5. CORS handling
+2. Request logging
+3. CORS handling
+4. Body parsing (JSON and URL-encoded)
+5. Cookie parsing
 6. Authentication (JWT validation)
 7. Controller routing
 8. Error handling
