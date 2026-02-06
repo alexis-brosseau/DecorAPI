@@ -7,7 +7,6 @@ A lightweight, decorator-based Express framework for TypeScript with built-in va
 - **Auth built-in** - JWT tokens + role-based permissions (Admin, User, Guest)
 - **Database transactions** - Wrap any route in a transaction with one decorator
 - **Logging** - Console + file logging that actually helps when debugging
-- **Just Express underneath** - No magic, just a nicer API on top of Express
 - **Proper error handling** - Custom error classes that map to HTTP status codes
 
 ## Quick Start
