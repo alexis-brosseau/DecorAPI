@@ -224,7 +224,3 @@ DB_PASS=password
 ACCESS_TOKEN_SECRET=your_jwt_secret
 REFRESH_TOKEN_SECRET=your_jwt_secret
 ```
-
-## Author
-
-Alexis Brosseau
