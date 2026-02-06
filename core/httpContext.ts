@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import type Database from '../dal/database.js';
 import type { AccessTokenPayload } from './tokens.js';
-import type { UUID } from 'crypto';
 
 export default interface HttpContext {
   req: Request;

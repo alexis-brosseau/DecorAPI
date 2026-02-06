@@ -1,7 +1,7 @@
 import Table from '../table.js';
 import type User from '../models/user.js';
-import type { PoolClient, DatabaseError } from 'pg';
-import { createHash, type UUID } from 'crypto';
+import type { PoolClient } from 'pg';
+import type { UUID } from 'crypto';
 import { UserRole } from '../models/user.js';
 import { dbErr } from '../../global.js';
 

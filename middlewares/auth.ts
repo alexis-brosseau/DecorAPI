@@ -1,7 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../core/tokens.js';
-import type { UUID } from 'crypto';
-import { UserRole } from '../dal/models/user.js';
 
 function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
