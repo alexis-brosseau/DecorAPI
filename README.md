@@ -210,7 +210,7 @@ throw new ConflictError('Email already used');     // 409
 Create a `.env` file:
 
 ```env
-ENVIRONMENT=dev        (dev or prod)
+ENVIRONMENT=dev/prod
 PORT=8800
 SAVE_LOGS=true/false   (Save logs in a file under /logs)
 DEBUG_MODE=true/false  (Output error stack in console)
