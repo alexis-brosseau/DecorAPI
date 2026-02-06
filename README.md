@@ -84,9 +84,9 @@ Built-in types for validation:
 import Controller, { get, post, body } from '../core/controller.js';
 import type HttpContext from '../core/httpContext.js';
 
-export default class UserController extends Controller {
+export default class MyController extends Controller {
   @get('/path')
-  async createUser({ res, body }: HttpContext) {
+  async myRoute({ res, body }: HttpContext) {
     res.status(200).send("Hello world!");
   }
 }
