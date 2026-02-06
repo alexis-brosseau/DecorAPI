@@ -7,7 +7,6 @@ A lightweight, decorator-based Express framework for TypeScript with built-in va
 - **Auth built-in** - JWT tokens + role-based permissions (Admin, User, Guest)
 - **Database transactions** - Wrap any route in a transaction with one decorator
 - **Logging** - Console + file logging that actually helps when debugging
-- **Just Express underneath** - No magic, just a nicer API on top of Express
 - **Proper error handling** - Custom error classes that map to HTTP status codes
 
 ## Quick Start
@@ -34,10 +33,10 @@ npm start
 ## Middleware Stack
 
 1. Rate limiting
-2. Body parsing (JSON and URL-encoded)
-3. Cookie parsing
-4. Request logging
-5. CORS handling
+2. Request logging
+3. CORS handling
+4. Body parsing (JSON and URL-encoded)
+5. Cookie parsing
 6. Authentication (JWT validation)
 7. Controller routing
 8. Error handling
@@ -158,11 +157,12 @@ import { UserRole } from '../dal/models/user.js';
 import { getUsersByRole } from '../services/user.js';
 
 @post('/transfer')
+@auth(UserRole.Admin)
 @useTransaction()
-async getAdmin({ res, db }: HttpContext) {
+async getAdmins({ res, db }: HttpContext) {
   // All database operations run in a single transaction
   // Automatically rolls back on error
-  await getUsersByRole(UserRole.Admin, db);
+  const admins = await getUsersByRole(UserRole.Admin, db);
   // ...
 }
 ```
@@ -210,10 +210,10 @@ throw new ConflictError('Email already used');     // 409
 Create a `.env` file:
 
 ```env
-ENVIRONMENT=dev/prod
+ENVIRONMENT=dev|prod
 PORT=8800
-SAVE_LOGS=true/false   (Save logs in a file under /logs)
-DEBUG_MODE=true/false  (Output error stack in console)
+SAVE_LOGS=true|false   (Save logs in a file under /logs)
+DEBUG_MODE=true|false  (Output error stack in console)
 
 DB_HOST=localhost
 DB_PORT=5432
