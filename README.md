@@ -158,11 +158,12 @@ import { UserRole } from '../dal/models/user.js';
 import { getUsersByRole } from '../services/user.js';
 
 @post('/transfer')
+@auth(UserRole.Admin)
 @useTransaction()
-async getAdmin({ res, db }: HttpContext) {
+async getAdmins({ res, db }: HttpContext) {
   // All database operations run in a single transaction
   // Automatically rolls back on error
-  await getUsersByRole(UserRole.Admin, db);
+  const admins = await getUsersByRole(UserRole.Admin, db);
   // ...
 }
 ```
