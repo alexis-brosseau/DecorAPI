@@ -157,7 +157,7 @@ import { useTransaction } from '../core/controller.js';
 import { UserRole } from '../dal/models/user.js';
 import { getUsersByRole } from '../services/user.js';
 
-@post('/transfer')
+@post('/admins')
 @auth(UserRole.Admin)
 @useTransaction()
 async getAdmins({ res, db }: HttpContext) {
