@@ -128,7 +128,8 @@ import { ensureQuery } from '../core/httpContext.js';
   offset: Optional(Number)
 })
 async search({ res, query }: HttpContext) {
-  const { term, limit = 10, offset = 0 } = ensureQuery(query);
+  // url query is type-safe and validated
+  const { term, limit, offset } = ensureQuery(query);
   // ...
 }
 ```
