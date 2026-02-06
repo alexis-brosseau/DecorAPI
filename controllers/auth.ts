@@ -15,8 +15,6 @@ export default class AuthController extends Controller {
     const { username, email, password } = ensureBody(body);
 
     const user = await createUser(username, email, password, db);
-
-    // TODO: send  email with verification link in production
     res.status(201).json({ user });
   }
 

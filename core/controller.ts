@@ -86,6 +86,7 @@ export const head = createRouteDecorator('head');
 
 // Custom types
 export class UUID { name = 'UUID' };
+export class Email { name = 'Email' };
 
 // Supported types
 type Constructor =
@@ -93,7 +94,8 @@ type Constructor =
   | NumberConstructor
   | BooleanConstructor
   | ObjectConstructor
-  | typeof UUID;
+  | typeof UUID
+  | typeof Email;
 
 // Optional type wrapper
 class ArrayOfConstructor {
@@ -125,6 +127,7 @@ const typeValidators: Record<Constructor['name'], (value: any) => boolean> = {
   Boolean: (v) => typeof v === 'boolean',
   Object: (v) => typeof v === 'object' && v !== null && !Array.isArray(v),
   UUID: (v) => typeof v === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(v),
+  Email: (v) => typeof v === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
 };
 
 type FieldDefinition = Schema | OptionalConstructor;
