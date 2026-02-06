@@ -33,7 +33,7 @@ npm start
 
 ## Middleware Stack
 
-1. Rate limiting (100 requests per 15 minutes)
+1. Rate limiting
 2. Body parsing (JSON and URL-encoded)
 3. Cookie parsing
 4. Request logging
