@@ -48,8 +48,8 @@ export default class AuthController extends Controller {
   }
 
   @post("/guest")
-  @useTransaction()
   @body({ username: String })
+  @useTransaction()
   async guest({ res, body, db }: HttpContext) {
     const { username } = ensureBody(body);
     const guest = await createGuest(username, db);
