@@ -2,18 +2,9 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Drop tables (reverse dependency order)
 DROP TABLE IF EXISTS "user";
-DROP TABLE IF EXISTS game_move;
-DROP TABLE IF EXISTS game_session_player;
-DROP TABLE IF EXISTS game_session;
-DROP TABLE IF EXISTS lobby_player;
-DROP TABLE IF EXISTS lobby;
-DROP TABLE IF EXISTS game;
 
 -- Drop types
 DROP TYPE IF EXISTS user_role;
-DROP TYPE IF EXISTS lobby_status;
-DROP TYPE IF EXISTS player_status;
-DROP TYPE IF EXISTS game_session_status;
 
 -- User
 CREATE TYPE user_role AS ENUM ('admin', 'user', 'guest');

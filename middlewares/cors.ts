@@ -6,7 +6,7 @@ function corsMiddleware(req: Request, res: Response, next: NextFunction) {
   if (config.environment === Environment.Development)
     allowAllAnonymousAccess(req, res);
   else
-    allowVizionaryAccess(req, res);
+    allowMySiteAccess(req, res);
 
   if (req.method == 'OPTIONS') {
     res.status(200).send();
@@ -16,14 +16,12 @@ function corsMiddleware(req: Request, res: Response, next: NextFunction) {
   next();
 };
 
-function allowVizionaryAccess(req: express.Request, res: Response) {
+function allowMySiteAccess(req: express.Request, res: Response) {
 
   const origin = req.headers.origin;
   const allowedOrigins = [
-    'https://vizionary.ca',
-    'https://app.vizionari.ca',
-    'http://vizionary.ca',
-    'http://app.vizionari.ca'
+    'https://mysite.com',
+    'http://mysite.com',
   ];
 
   if (origin && allowedOrigins.includes(origin)) {
@@ -40,6 +38,8 @@ function allowAllAnonymousAccess(req: Request, res: Response) {
   
   // If credentials are used, you must reflect the origin instead of "*"
   res.header('Access-Control-Allow-Origin', origin);
+  res.header('Access-Control-Allow-Credentials', 'true');
+
   res.header('Vary', 'Origin'); // prevents caching issues
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');

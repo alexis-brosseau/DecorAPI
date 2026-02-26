@@ -1,7 +1,7 @@
-import Table from '../table.js';
-import type User from '../models/user.js';
+import { Table } from 'express-decor/database';
 import type { PoolClient } from 'pg';
 import type { UUID } from 'crypto';
+import type User from '../models/user.js';
 import { UserRole } from '../models/user.js';
 import { dbErr } from '../../global.js';
 

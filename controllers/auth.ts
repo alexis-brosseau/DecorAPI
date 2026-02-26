@@ -1,10 +1,11 @@
-import Controller, { post, body, useTransaction, auth } from '../core/controller.js';
-import type HttpContext from '../core/httpContext.js';
-import { ensureBody, UnauthorizedError } from '../core/httpContext.js';
+import { Controller, post, body, auth, useTransaction, Optional  } from 'express-decor/controller';
+import type HttpContext from 'express-decor/httpContext';
+import { ensureBody } from 'express-decor/httpContext';
+import { UnauthorizedError } from 'express-decor/errors';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from 'express-decor/jwt';
+
 import { config, Environment } from '../global.js';
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../core/tokens.js';
 import { createUser, authUser, getUser, createGuest } from '../services/user.js';
-import { UserRole } from '../dal/models/user.js';
 
 export default class AuthController extends Controller {
 
@@ -48,11 +49,11 @@ export default class AuthController extends Controller {
   }
 
   @post("/guest")
-  @body({ username: String })
+  @body({ username: Optional(String) })
   @useTransaction()
   async guest({ res, body, db }: HttpContext) {
     const { username } = ensureBody(body);
-    const guest = await createGuest(username, db);
+    const guest = await createGuest(username ?? "Guest", db);
 
     const refreshToken = generateRefreshToken({ 
       userId: guest.id, 
@@ -75,7 +76,6 @@ export default class AuthController extends Controller {
   }
 
   @post("/refresh")
-  @auth(UserRole.GUEST)
   @useTransaction()
   async refresh({ res, req, db }: HttpContext) {
 
@@ -98,7 +98,7 @@ export default class AuthController extends Controller {
   }
 
   @post("/logout")
-  @auth(UserRole.USER)
+  @auth()
   async logout({ res }: HttpContext) {
 
     res.clearCookie('refreshToken', {

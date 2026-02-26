@@ -18,8 +18,6 @@ export const config = {
   environment: parseEnvironment(process.env.ENVIRONMENT),
   version: "1.0.0",
   port: Number(process.env.PORT),
-  saveLogs: process.env.SAVE_LOGS === "true",
-  debugMode: process.env.DEBUG_MODE === "true",
   db: {
     host: String(process.env.DB_HOST),
     user: String(process.env.DB_USER),
