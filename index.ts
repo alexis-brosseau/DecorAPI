@@ -17,7 +17,7 @@ app.use(rateLimit({
     status: 429,
     error: 'Too many requests, please try again later.',
   },
-})); 
+}));
 
 app.use(decor({
   pgPool: {

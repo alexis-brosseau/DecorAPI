@@ -8,8 +8,10 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "esnext",
+    "jsx": "react-jsx",
     "lib": [
-      "esnext"
+      "esnext",
+      "dom"
     ],
     "types": [
       "node"

@@ -28,7 +28,7 @@ export default class UserTable extends Table {
   }
 
   async createUser({ id, username, email, password }: { 
-    id: UUID; 
+    id?: UUID;
     username: string; 
     email: string; 
     password: string; 
@@ -40,7 +40,13 @@ export default class UserTable extends Table {
     `;
 
     try {
-      const rows = await super.query(sql, [id, username, UserRole.USER.toString(), email, password]);
+      const rows = await super.query(sql, [
+        id ?? crypto.randomUUID(), 
+        username, 
+        UserRole.USER.toString(), 
+        email, 
+        password
+      ]);
       const data = rows[0];
       if (!data) throw new Error('Failed to create user');
       
@@ -54,7 +60,7 @@ export default class UserTable extends Table {
   }
 
   async createGuest({ id, username }: { 
-    id: UUID; 
+    id?: UUID; 
     username: string; 
   }): Promise<User> {
     const sql = `
@@ -63,14 +69,18 @@ export default class UserTable extends Table {
       RETURNING id, username, email, role, token_version, created_at
     `;
 
-    const rows = await super.query(sql, [id, username, UserRole.GUEST.toString()]);
+    const rows = await super.query(sql, [
+      id ?? crypto.randomUUID(),
+      username, 
+      UserRole.GUEST.toString()
+    ]);
     const data = rows[0];
     if (!data) throw new Error('Failed to create guest user');
     
     return this.mapRow(data);
   }
   
-  async auth(email: string, password: string): Promise<User | null> {
+  async auth({ email, password} : { email: string, password: string }): Promise<User | null> {
     const sql = `
       SELECT id, username, email, role, token_version, created_at
       FROM "user"
