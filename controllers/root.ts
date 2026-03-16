@@ -2,7 +2,7 @@ import { Controller, get, auth, useTransaction } from 'express-decor/controller'
 import type HttpContext from 'express-decor/httpContext';
 import { ensureToken, ensureDb } from 'express-decor/httpContext';
 import UserRepository from '../repositories/user.js';
-import { streamPage } from '../lib/stream.js';
+import { streamPage } from '../libraries/stream.js';
 
 export default class RootController extends Controller {
 
