@@ -1,6 +1,7 @@
-import { Controller, post, body, auth, useTransaction, Optional, Varchar, Email  } from 'express-decor/controller';
+import { Controller, post, body, auth, Optional, Varchar, Email  } from 'express-decor/controller';
 import type HttpContext from 'express-decor/httpContext';
 import { ensureBody, ensureDb } from 'express-decor/httpContext';
+import { transaction } from 'express-decor/database';
 import { UnauthorizedError } from 'express-decor/errors';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from 'express-decor/jwt';
 
@@ -11,23 +12,25 @@ export default class AuthController extends Controller {
 
   @post("/register")
   @body({ username: Varchar(4, 16), email: Email, password: Varchar(8) })
-  @useTransaction()
-  async register({ res, body, db }: HttpContext) {
+  async register({ res, body }: HttpContext) {
     const { username, email, password } = ensureBody(body);
-    db = ensureDb(db);
 
-    const user = await db.repo(UserRepository).createUser({ username, email, password });
+    const user = await transaction((db) => 
+      db.repo(UserRepository).createUser({ username, email, password })
+    );
+
     res.status(201).json({ user });
   }
 
   @post("/login")
   @body({ email: Email, password: Varchar(8) })
-  @useTransaction()
-  async login({ res, body, db }: HttpContext) {
+  async login({ res, body }: HttpContext) {
     const { email, password } = ensureBody(body);
-    db = ensureDb(db);
 
-    const user = await db.repo(UserRepository).auth({ email, password });
+    const user = await transaction((db) => 
+      db.repo(UserRepository).auth({ email, password })
+    );
+
     if (!user) throw new UnauthorizedError('Invalid email or password');
 
     const refreshToken = generateRefreshToken({ 
@@ -52,14 +55,14 @@ export default class AuthController extends Controller {
 
   @post("/guest")
   @body({ username: Optional(Varchar(4, 16)) })
-  @useTransaction()
-  async guest({ res, body, db }: HttpContext) {
+  async guest({ res, body }: HttpContext) {
     const { username } = ensureBody(body);
-    db = ensureDb(db);
 
-    const guest = await db.repo(UserRepository).createGuest({ 
-      username: username ?? `Guest-${Math.floor(Math.random() * 100000)}` 
-    });
+    const guest = await transaction((db) => 
+      db.repo(UserRepository).createGuest({ 
+        username: username ?? `Guest-${Math.floor(Math.random() * 100000)}` 
+      })
+    );
 
     const refreshToken = generateRefreshToken({ 
       userId: guest.id, 
@@ -82,22 +85,21 @@ export default class AuthController extends Controller {
   }
 
   @post("/refresh")
-  @useTransaction()
-  async refresh({ res, req, db }: HttpContext) {
-    db = ensureDb(db);
-
+  async refresh({ res, req }: HttpContext) {
+    
     const refreshToken = req.cookies?.refreshToken;
     if (!refreshToken) throw new UnauthorizedError('Credentials not provided');
 
     const token = verifyRefreshToken(refreshToken);
     if (!token) throw new UnauthorizedError('Invalid or expired token');
-    
-    let accessToken;
 
-    const user = await db.repo(UserRepository).get(token.userId);
+    const user = await transaction((db) => 
+      db.repo(UserRepository).get(token.userId)
+    );
+
     if (!user || user.tokenVersion !== token.version) throw new UnauthorizedError('Unauthorized');
     
-    accessToken = generateAccessToken({ 
+    const accessToken = generateAccessToken({ 
       userId: user.id,
       role: user.role.toString(),
     });
